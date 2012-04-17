@@ -9,18 +9,20 @@
 
 #define CMDLS "-l"
 #define CMDSET "-s"
+#define CMDGET "-g"
 #define USAGE_GENERAL "<command> <opt args> <path>"
 #define USAGE_LIST CMDLS " <path>"
 #define USAGE_SET CMDSET " <Attr Name> <Attr Value> <path>"
+#define USAGE_GET CMDGET " <Attr Name> <path>"
+
+#ifdef linux
+/* Linux is missing ENOATTR error, using ENODATA instead */
+#define ENOATTR ENODATA
+#endif
 
 void printUsageGeneral(char* pgmName){
     fprintf(stderr, "Usage: %s %s\n",
 	    pgmName, USAGE_GENERAL);    
-}
-
-void printUsageSet(char* pgmName){
-    fprintf(stderr, "Usage: %s %s\n",
-	    pgmName, USAGE_SET);    
 }
 
 void printUsageList(char* pgmName){
@@ -28,14 +30,27 @@ void printUsageList(char* pgmName){
 	    pgmName, USAGE_LIST);    
 }
 
+void printUsageSet(char* pgmName){
+    fprintf(stderr, "Usage: %s %s\n",
+	    pgmName, USAGE_SET);    
+}
+
+void printUsageGet(char* pgmName){
+    fprintf(stderr, "Usage: %s %s\n",
+	    pgmName, USAGE_GET);    
+}
+
+
 int main(int argc, char* argv[]){
 
     char* lst = NULL;
     char* chr = NULL;
     char* start = NULL;
     char* tmpstr = NULL;
+    char* tmpval = NULL;
     ssize_t cnt = 0;
     ssize_t lstsize = 0;
+    ssize_t valsize = 0;
 
     if(argc < 2){
 	printUsageGeneral(argv[0]);
@@ -89,6 +104,10 @@ int main(int argc, char* argv[]){
 	}
 	/* Append necessary 'user.' prefix to beginning of name string */
 	tmpstr = malloc(strlen(argv[2]) + XATTR_USER_PREFIX_LEN + 1);
+	if(!tmpstr){
+	    perror("malloc of 'tmpstr' error");
+	    exit(EXIT_FAILURE);
+	}
 	strcpy(tmpstr, XATTR_USER_PREFIX);
 	strcat(tmpstr, argv[2]);
 	if(setxattr(argv[4], tmpstr, argv[3], strlen(argv[3]), 0)){
@@ -101,7 +120,65 @@ int main(int argc, char* argv[]){
 	}
 	free(tmpstr);
     }
-
+    else if(!strcmp(argv[1], CMDGET)){
+	/* Get Case */
+	/* Check proper input */
+	if(argc != 4){
+	    printUsageGet(argv[0]);
+	    exit(EXIT_FAILURE);
+	}
+	/* Append necessary 'user.' prefix to beginning of name string */
+	tmpstr = malloc(strlen(argv[2]) + XATTR_USER_PREFIX_LEN + 1);
+	if(!tmpstr){
+	    perror("malloc of 'tmpstr' error");
+	    exit(EXIT_FAILURE);
+	}
+	strcpy(tmpstr, XATTR_USER_PREFIX);
+	strcat(tmpstr, argv[2]);
+	/* Get valsize */
+	valsize = getxattr(argv[3], tmpstr, NULL, 0);
+	if(valsize < 0){
+	    if(errno == ENOATTR){
+		fprintf(stdout, "No %s attribute set on %s\n", tmpstr, argv[3]);
+		exit(EXIT_FAILURE);
+	    }
+	    else{
+		perror("getxattr error");
+		fprintf(stderr, "path  = %s\n", argv[3]);
+		fprintf(stderr, "name  = %s\n", tmpstr);
+		fprintf(stderr, "value = %s\n", "NULL");
+		fprintf(stderr, "size  = %d\n", valsize);
+		exit(EXIT_FAILURE);
+	    }
+	}
+	/* Malloc Value Space */
+	tmpval = malloc(sizeof(*tmpval)*(valsize+1));
+	if(!tmpval){
+	    perror("malloc of 'tmpval' error");
+	    exit(EXIT_FAILURE);
+	}
+	valsize = getxattr(argv[3], tmpstr, tmpval, valsize);
+	if(valsize < 0){
+	    if(errno == ENOATTR){
+		fprintf(stdout, "No %s attribute set on %s\n", tmpstr, argv[3]);
+		exit(EXIT_FAILURE);
+	    }
+	    else{
+		perror("getxattr error");
+		fprintf(stderr, "path  = %s\n", argv[3]);
+		fprintf(stderr, "name  = %s\n", tmpstr);
+		fprintf(stderr, "value = %s\n", tmpval);
+		fprintf(stderr, "size  = %d\n", valsize);
+		exit(EXIT_FAILURE);
+	    }
+	}
+	
+	tmpval[valsize] = '\0';
+	fprintf(stdout, "%s = %s\n", tmpstr, tmpval);
+	
+	free(tmpval);
+	free(tmpstr);
+    }
     else{
 	fprintf(stderr, "Unrecognized option\n");
 	exit(EXIT_FAILURE);

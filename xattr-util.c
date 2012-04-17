@@ -10,10 +10,12 @@
 #define CMDLS "-l"
 #define CMDSET "-s"
 #define CMDGET "-g"
+#define CMDREM "-r"
 #define USAGE_GENERAL "<command> <opt args> <path>"
 #define USAGE_LIST CMDLS " <path>"
 #define USAGE_SET CMDSET " <Attr Name> <Attr Value> <path>"
 #define USAGE_GET CMDGET " <Attr Name> <path>"
+#define USAGE_REM CMDREM " <Attr Name> <path>"
 
 #ifdef linux
 /* Linux is missing ENOATTR error, using ENODATA instead */
@@ -40,6 +42,10 @@ void printUsageGet(char* pgmName){
 	    pgmName, USAGE_GET);    
 }
 
+void printUsageRem(char* pgmName){
+    fprintf(stderr, "Usage: %s %s\n",
+	    pgmName, USAGE_REM);    
+}
 
 int main(int argc, char* argv[]){
 
@@ -52,6 +58,7 @@ int main(int argc, char* argv[]){
     ssize_t lstsize = 0;
     ssize_t valsize = 0;
 
+    /* Check base input */
     if(argc < 2){
 	printUsageGeneral(argv[0]);
 	exit(EXIT_FAILURE);
@@ -157,6 +164,7 @@ int main(int argc, char* argv[]){
 	    perror("malloc of 'tmpval' error");
 	    exit(EXIT_FAILURE);
 	}
+	/* Get Value */
 	valsize = getxattr(argv[3], tmpstr, tmpval, valsize);
 	if(valsize < 0){
 	    if(errno == ENOATTR){
@@ -173,10 +181,42 @@ int main(int argc, char* argv[]){
 	    }
 	}
 	
+	/* Print Value */
 	tmpval[valsize] = '\0';
 	fprintf(stdout, "%s = %s\n", tmpstr, tmpval);
 	
+	/* Clean Up */
 	free(tmpval);
+	free(tmpstr);
+    }
+    else if(!strcmp(argv[1], CMDREM)){
+	/* Get Case */
+	/* Check proper input */
+	if(argc != 4){
+	    printUsageRem(argv[0]);
+	    exit(EXIT_FAILURE);
+	}
+	/* Append necessary 'user.' prefix to beginning of name string */
+	tmpstr = malloc(strlen(argv[2]) + XATTR_USER_PREFIX_LEN + 1);
+	if(!tmpstr){
+	    perror("malloc of 'tmpstr' error");
+	    exit(EXIT_FAILURE);
+	}
+	strcpy(tmpstr, XATTR_USER_PREFIX);
+	strcat(tmpstr, argv[2]);
+	/* Remove Attr */
+	if(removexattr(argv[3], tmpstr)){
+	    if(errno == ENOATTR){
+		fprintf(stdout, "No %s attribute set on %s\n", tmpstr, argv[3]);
+		exit(EXIT_FAILURE);
+	    }
+	    else{
+		perror("removexattr error");
+		fprintf(stderr, "path  = %s\n", argv[3]);
+		fprintf(stderr, "name  = %s\n", tmpstr);
+		exit(EXIT_FAILURE);
+	    }
+	}
 	free(tmpstr);
     }
     else{

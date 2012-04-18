@@ -10,15 +10,16 @@
 
 CC         = gcc
 
-CFLAGSFUSE := `pkg-config fuse --cflags`
-LLIBSFUSE := `pkg-config fuse --libs`
+CFLAGSFUSE   = `pkg-config fuse --cflags`
+LLIBSFUSE    = `pkg-config fuse --libs`
+LLIBSOPENSSL = -lcrypto
 
 CFLAGS = -c -g -Wall -Wextra
 LFLAGS = -g -Wall -Wextra
 
 .PHONY: all clean
 
-all: fusehello fusexmp xattr-util
+all: fusehello fusexmp xattr-util openssl_aes
 
 fusehello: fusehello.o
 	$(CC) $(LFLAGS) $^ -o $@ $(LLIBSFUSE)
@@ -29,6 +30,9 @@ fusexmp: fusexmp.o
 xattr-util: xattr-util.o
 	$(CC) $(LFLAGS) $^ -o $@
 
+openssl_aes: openssl_aes.o
+	$(CC) $(LFLAGS) $^ -o $@ $(LLIBSOPENSSL)
+
 fusehello.o: fusehello.c
 	$(CC) $(CFLAGS) $(CFLAGSFUSE) $<
 
@@ -36,7 +40,10 @@ fusexmp.o: fusexmp.c
 	$(CC) $(CFLAGS) $(CFLAGSFUSE) $<
 
 xattr-util.o: xattr-util.c
-	$(CC) $(CFLAGS) $(CFLAGSFUSE) $<
+	$(CC) $(CFLAGS) $<
+
+openssl_aes.o: openssl_aes.c
+	$(CC) $(CFLAGS) $<
 
 clean:
 	rm -f fusehello fusexmp xattr-util

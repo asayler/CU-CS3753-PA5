@@ -15,8 +15,12 @@ Junho Ahn - 2012
 
 ---Dependencies---
 fuse-utils
+openssl
 libfuse-dev
 libattr1-dev
+libssl1.0.0
+libssl-dev
+libssl-doc
 
 ---Folders---
 handout - Assignment description and documentation

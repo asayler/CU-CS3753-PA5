@@ -13,6 +13,11 @@ Adopted from work by Chris Wailes - 2010
 With help from:
 Junho Ahn - 2012
 
+---Dependencies---
+fuse-utils
+libfuse-dev
+libattr1-dev
+
 ---Folders---
 handout - Assignment description and documentation
 

@@ -36,9 +36,6 @@ openssl_aes: openssl_aes.o
 aes-crypt: aes-crypt.o
 	$(CC) $(LFLAGS) $^ -o $@ $(LLIBSOPENSSL)
 
-aes-decrypt: aes-decrypt.o
-	$(CC) $(LFLAGS) $^ -o $@ $(LLIBSOPENSSL)
-
 fusehello.o: fusehello.c
 	$(CC) $(CFLAGS) $(CFLAGSFUSE) $<
 

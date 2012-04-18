@@ -122,9 +122,10 @@ int main(int argc, char* argv[]){
 	    fprintf(stderr, "path  = %s\n", argv[4]);
 	    fprintf(stderr, "name  = %s\n", tmpstr);
 	    fprintf(stderr, "value = %s\n", argv[3]);
-	    fprintf(stderr, "size  = %d\n", strlen(argv[3]));
+	    fprintf(stderr, "size  = %zd\n", strlen(argv[3]));
 	    exit(EXIT_FAILURE);
 	}
+	/* Cleanup */
 	free(tmpstr);
     }
     else if(!strcmp(argv[1], CMDGET)){
@@ -147,14 +148,15 @@ int main(int argc, char* argv[]){
 	if(valsize < 0){
 	    if(errno == ENOATTR){
 		fprintf(stdout, "No %s attribute set on %s\n", tmpstr, argv[3]);
-		exit(EXIT_FAILURE);
+		free(tmpstr);
+		return EXIT_SUCCESS;
 	    }
 	    else{
 		perror("getxattr error");
 		fprintf(stderr, "path  = %s\n", argv[3]);
 		fprintf(stderr, "name  = %s\n", tmpstr);
 		fprintf(stderr, "value = %s\n", "NULL");
-		fprintf(stderr, "size  = %d\n", valsize);
+		fprintf(stderr, "size  = %zd\n", valsize);
 		exit(EXIT_FAILURE);
 	    }
 	}
@@ -169,14 +171,16 @@ int main(int argc, char* argv[]){
 	if(valsize < 0){
 	    if(errno == ENOATTR){
 		fprintf(stdout, "No %s attribute set on %s\n", tmpstr, argv[3]);
-		exit(EXIT_FAILURE);
+		free(tmpval);
+		free(tmpstr);
+		return EXIT_SUCCESS;
 	    }
 	    else{
 		perror("getxattr error");
 		fprintf(stderr, "path  = %s\n", argv[3]);
 		fprintf(stderr, "name  = %s\n", tmpstr);
 		fprintf(stderr, "value = %s\n", tmpval);
-		fprintf(stderr, "size  = %d\n", valsize);
+		fprintf(stderr, "size  = %zd\n", valsize);
 		exit(EXIT_FAILURE);
 	    }
 	}
@@ -208,7 +212,8 @@ int main(int argc, char* argv[]){
 	if(removexattr(argv[3], tmpstr)){
 	    if(errno == ENOATTR){
 		fprintf(stdout, "No %s attribute set on %s\n", tmpstr, argv[3]);
-		exit(EXIT_FAILURE);
+		free(tmpstr);
+		return EXIT_SUCCESS;
 	    }
 	    else{
 		perror("removexattr error");
@@ -217,6 +222,7 @@ int main(int argc, char* argv[]){
 		exit(EXIT_FAILURE);
 	    }
 	}
+	/* Cleanup */
 	free(tmpstr);
     }
     else{

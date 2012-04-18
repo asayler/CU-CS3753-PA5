@@ -19,7 +19,7 @@ LFLAGS = -g -Wall -Wextra
 
 .PHONY: all clean
 
-all: fusehello fusexmp xattr-util openssl_aes
+all: fusehello fusexmp xattr-util openssl_aes aes-encrypt
 
 fusehello: fusehello.o
 	$(CC) $(LFLAGS) $^ -o $@ $(LLIBSFUSE)
@@ -33,6 +33,9 @@ xattr-util: xattr-util.o
 openssl_aes: openssl_aes.o
 	$(CC) $(LFLAGS) $^ -o $@ $(LLIBSOPENSSL)
 
+aes-encrypt: aes-encrypt.o
+	$(CC) $(LFLAGS) $^ -o $@ $(LLIBSOPENSSL)
+
 fusehello.o: fusehello.c
 	$(CC) $(CFLAGS) $(CFLAGSFUSE) $<
 
@@ -42,11 +45,14 @@ fusexmp.o: fusexmp.c
 xattr-util.o: xattr-util.c
 	$(CC) $(CFLAGS) $<
 
-openssl_aes.o: openssl_aes.c
+openssl_aes.o: openssl_aes.c openssl_aes.h
+	$(CC) $(CFLAGS) $<
+
+aes-encrypt.o: aes-encrypt.c openssl_aes.h
 	$(CC) $(CFLAGS) $<
 
 clean:
-	rm -f fusehello fusexmp xattr-util
+	rm -f fusehello fusexmp xattr-util openssl_aes aes-encrypt
 	rm -f *.o
 	rm -f *~
 	rm -f *.csv

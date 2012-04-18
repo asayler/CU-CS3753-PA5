@@ -9,9 +9,8 @@
 #ifndef OPENSSL_AES_H
 #define OPENSSL_AES_H
 
-#include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
 
@@ -38,7 +37,7 @@ int aes_init(unsigned char* key_data, int key_data_len,
     i = EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha1(), salt,
 		       key_data, key_data_len, nrounds, key, iv);
     if (i != 32) {
-	printf("Key size is %d bits - should be 256 bits\n", i * 8);
+	fprintf(stderr, "Key size is %d bits - should be 256 bits\n", i * 8);
 	return -1;
     }
 

@@ -32,6 +32,9 @@ int main(int argc, char **argv)
     else if(!strcmp(argv[1], "-d")){
 	action = 0;
     }
+    else if(!strcmp(argv[1], "-c")){
+	action = -1;
+    }
     else {
 	fprintf(stderr, "Unkown action\n");
 	exit(EXIT_FAILURE);

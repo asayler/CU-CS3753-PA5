@@ -51,7 +51,7 @@ xattr-util.o: xattr-util.c
 openssl_aes.o: openssl_aes.c openssl_aes.h
 	$(CC) $(CFLAGS) $<
 
-aes-crypt.o: aes-crypt.c openssl_aes.h
+aes-crypt.o: aes-crypt.c aes-crypt.h
 	$(CC) $(CFLAGS) $<
 
 clean:

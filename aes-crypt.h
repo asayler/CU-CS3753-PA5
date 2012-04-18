@@ -8,7 +8,7 @@
 #include <openssl/evp.h>
 #include <openssl/aes.h>
 
-int do_crypt(FILE *in, FILE *out, int do_encrypt)
+int do_crypt(FILE *in, FILE *out, int do_encrypt, char* key_str)
 {
     /* Allow enough space in output buffer for additional block */
     unsigned char inbuf[1024];
@@ -23,12 +23,19 @@ int do_crypt(FILE *in, FILE *out, int do_encrypt)
     unsigned char key[32];
     unsigned char iv[32];
     int i;
-    for(i = 0; i < 32; i++){
-	key[i] = (unsigned char)i;
-	iv[i] = (unsigned char)(100-i);
-    }
+    int nrounds = 5;
 
     if(do_encrypt >= 0){
+	if(!key_str){
+	    fprintf(stderr, "Key_str must not be NULL\n");
+	    return 0;
+	}
+	i = EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha1(), NULL,
+			   (unsigned char*)key_str, strlen(key_str), nrounds, key, iv);
+	if (i != 32) {
+	    fprintf(stderr, "Key size is %d bits - should be 256 bits\n", i * 8);
+	    return 0;
+	}
 	EVP_CIPHER_CTX_init(&ctx);
 	EVP_CipherInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key, iv, do_encrypt);
     }    

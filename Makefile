@@ -8,7 +8,7 @@
 #	This is the Makefile for PA5.
 
 
-CC         = gcc
+CC           = gcc
 
 CFLAGSFUSE   = `pkg-config fuse --cflags`
 LLIBSFUSE    = `pkg-config fuse --libs`
@@ -17,9 +17,17 @@ LLIBSOPENSSL = -lcrypto
 CFLAGS = -c -g -Wall -Wextra
 LFLAGS = -g -Wall -Wextra
 
-.PHONY: all clean
+FUSE_EXAMPLES = fusehello fusexmp 
+XATTR_EXAMPLES = xattr-util
+OPENSSL_EXAMPLES = aes-crypt 
 
-all: fusehello fusexmp xattr-util openssl_aes aes-crypt
+.PHONY: all fuse-examples xattr-examples openssl-examples clean
+
+all: fuse-examples xattr-examples openssl-examples
+
+fuse-examples: $(FUSE_EXAMPLES)
+xattr-examples: $(XATTR_EXAMPLES)
+openssl-examples: $(OPENSSL_EXAMPLES)
 
 fusehello: fusehello.o
 	$(CC) $(LFLAGS) $^ -o $@ $(LLIBSFUSE)
@@ -29,9 +37,6 @@ fusexmp: fusexmp.o
 
 xattr-util: xattr-util.o
 	$(CC) $(LFLAGS) $^ -o $@
-
-openssl_aes: openssl_aes.o
-	$(CC) $(LFLAGS) $^ -o $@ $(LLIBSOPENSSL)
 
 aes-crypt: aes-crypt.o
 	$(CC) $(LFLAGS) $^ -o $@ $(LLIBSOPENSSL)
@@ -45,18 +50,15 @@ fusexmp.o: fusexmp.c
 xattr-util.o: xattr-util.c
 	$(CC) $(CFLAGS) $<
 
-openssl_aes.o: openssl_aes.c openssl_aes.h
-	$(CC) $(CFLAGS) $<
-
 aes-crypt.o: aes-crypt.c aes-crypt.h
 	$(CC) $(CFLAGS) $<
 
 clean:
-	rm -f fusehello fusexmp xattr-util openssl_aes aes-crypt
+	rm -f $(FUSE_EXAMPLES)
+	rm -f $(XATTR_EXAMPLES)
+	rm -f $(OPENSSL_EXAMPLES)
 	rm -f *.o
 	rm -f *~
-	rm -f *.csv
-	rm -f *.pdf
 	rm -f handout/*~
 	rm -f handout/*.log
 	rm -f handout/*.aux

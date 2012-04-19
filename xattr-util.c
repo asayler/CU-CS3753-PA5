@@ -1,3 +1,21 @@
+/* aes-crypt.c
+ * Extended attribute manipulation demo program
+ *
+ * See aes-crypt.h and aes-crypt.c for more details
+ *
+ * By Andy Sayler (www.andysayler.com)
+ * Created  04/17/12
+ * Modified 04/18/12
+ *
+ * Note: The most common issues here are neglecting the necessary namespace
+ *       prefixes on attribute names, or using a file system that does not
+ *	 support extended attributes. For namespace info, see
+ *       http://www.freedesktop.org/wiki/CommonExtendedAttributes.
+ *       For info on enabling xattr on EXT file systems, see
+ *	 http://wiki.kaspersandberg.com/doku.php?id=howtos:xattr#getting_ea_s_enabled
+ *
+ */
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,33 +40,34 @@
 #define ENOATTR ENODATA
 #endif
 
-void printUsageGeneral(char* pgmName){
+static void printUsageGeneral(char* pgmName){
     fprintf(stderr, "Usage: %s %s\n",
 	    pgmName, USAGE_GENERAL);    
 }
 
-void printUsageList(char* pgmName){
+static void printUsageList(char* pgmName){
     fprintf(stderr, "Usage: %s %s\n",
 	    pgmName, USAGE_LIST);    
 }
 
-void printUsageSet(char* pgmName){
+static void printUsageSet(char* pgmName){
     fprintf(stderr, "Usage: %s %s\n",
 	    pgmName, USAGE_SET);    
 }
 
-void printUsageGet(char* pgmName){
+static void printUsageGet(char* pgmName){
     fprintf(stderr, "Usage: %s %s\n",
 	    pgmName, USAGE_GET);    
 }
 
-void printUsageRem(char* pgmName){
+static void printUsageRem(char* pgmName){
     fprintf(stderr, "Usage: %s %s\n",
 	    pgmName, USAGE_REM);    
 }
 
 int main(int argc, char* argv[]){
 
+    /* Local vars */
     char* lst = NULL;
     char* chr = NULL;
     char* start = NULL;
@@ -72,27 +91,31 @@ int main(int argc, char* argv[]){
 	    printUsageList(argv[0]);
 	    exit(EXIT_FAILURE);
 	}
+	/* Call xattr list to get size */
 	lstsize = listxattr(argv[2], NULL, 0);
 	if(lstsize < 0){
 	    perror("listxattr error");
 	    fprintf(stderr, "path  = %s\n", argv[2]);
 	    exit(EXIT_FAILURE);
 	}
+	/* Malloc space for list items */
 	lst = malloc(sizeof(*lst)*lstsize);
 	if(!lst){
 	    perror("malloc of 'lst' error");
 	    exit(EXIT_FAILURE);
 	}
+	/* Call xattr list to get data */
 	lstsize = listxattr(argv[2], lst, lstsize);
 	if(lstsize < 0 || !lst){
 	    perror("listxattr error");
 	    fprintf(stderr, "path  = %s\n", argv[2]);
 	    exit(EXIT_FAILURE);
 	}
-	/* Tokenize on \0 */
+	/* Tokenize null seperated array on \0 */
 	chr = start = lst;
 	cnt = 0;
 	while(cnt < lstsize){
+	    /* Print attribute names, one per line */
 	    fprintf(stdout, "%s\n", start);
 	    while(*chr != '\0'){
 		chr++;
@@ -109,7 +132,7 @@ int main(int argc, char* argv[]){
 	    printUsageSet(argv[0]);
 	    exit(EXIT_FAILURE);
 	}
-	/* Append necessary 'user.' prefix to beginning of name string */
+	/* Append necessary 'user.' namespace prefix to beginning of name string */
 	tmpstr = malloc(strlen(argv[2]) + XATTR_USER_PREFIX_LEN + 1);
 	if(!tmpstr){
 	    perror("malloc of 'tmpstr' error");
@@ -117,6 +140,7 @@ int main(int argc, char* argv[]){
 	}
 	strcpy(tmpstr, XATTR_USER_PREFIX);
 	strcat(tmpstr, argv[2]);
+	/* Set attribute */
 	if(setxattr(argv[4], tmpstr, argv[3], strlen(argv[3]), 0)){
 	    perror("setxattr error");
 	    fprintf(stderr, "path  = %s\n", argv[4]);
@@ -135,7 +159,7 @@ int main(int argc, char* argv[]){
 	    printUsageGet(argv[0]);
 	    exit(EXIT_FAILURE);
 	}
-	/* Append necessary 'user.' prefix to beginning of name string */
+	/* Append necessary 'user.' namespace prefix to beginning of name string */
 	tmpstr = malloc(strlen(argv[2]) + XATTR_USER_PREFIX_LEN + 1);
 	if(!tmpstr){
 	    perror("malloc of 'tmpstr' error");
@@ -143,7 +167,7 @@ int main(int argc, char* argv[]){
 	}
 	strcpy(tmpstr, XATTR_USER_PREFIX);
 	strcat(tmpstr, argv[2]);
-	/* Get valsize */
+	/* Get attribute value size */
 	valsize = getxattr(argv[3], tmpstr, NULL, 0);
 	if(valsize < 0){
 	    if(errno == ENOATTR){
@@ -166,7 +190,7 @@ int main(int argc, char* argv[]){
 	    perror("malloc of 'tmpval' error");
 	    exit(EXIT_FAILURE);
 	}
-	/* Get Value */
+	/* Get attribute value */
 	valsize = getxattr(argv[3], tmpstr, tmpval, valsize);
 	if(valsize < 0){
 	    if(errno == ENOATTR){
@@ -194,13 +218,13 @@ int main(int argc, char* argv[]){
 	free(tmpstr);
     }
     else if(!strcmp(argv[1], CMDREM)){
-	/* Get Case */
+	/* Remove Case */
 	/* Check proper input */
 	if(argc != 4){
 	    printUsageRem(argv[0]);
 	    exit(EXIT_FAILURE);
 	}
-	/* Append necessary 'user.' prefix to beginning of name string */
+	/* Append necessary 'user.' namespace prefix to beginning of name string */
 	tmpstr = malloc(strlen(argv[2]) + XATTR_USER_PREFIX_LEN + 1);
 	if(!tmpstr){
 	    perror("malloc of 'tmpstr' error");
@@ -226,6 +250,7 @@ int main(int argc, char* argv[]){
 	free(tmpstr);
     }
     else{
+	/* Bad Case */
 	fprintf(stderr, "Unrecognized option\n");
 	exit(EXIT_FAILURE);
     }

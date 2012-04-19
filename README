@@ -7,18 +7,21 @@ Public Code
 By Andy Sayler - 2012
 <www.andysayler.com>
 
-Adopted from work by Chris Wailes - 2010
+Inspired by work from Chris Wailes - 2010
 <chris.wailes@gmail.com>
 
 With help from:
 Junho Ahn - 2012
+
+Various files adopted from other exiting work.
+See file comments for specific details and references.
 
 ---Dependencies---
 fuse-utils
 openssl
 libfuse-dev
 libattr1-dev
-libssl1.0.0
+libssl1.0.0 (or libssl0.9.X)
 libssl-dev
 libssl-doc
 
@@ -26,13 +29,39 @@ libssl-doc
 handout - Assignment description and documentation
 
 ---Files---
-Makefile - GNU makefile to build all relevant code
+Makefile         - GNU makefile to build all relevant code
+xattr.c          - Basic Extended Attribute manipulation program
+aes-crypt-util.c - Basic AES encryption program using aes-crypt library
+aes-crypt.h      - Basic AES file encryption library interface
+aes-crypt.c      - Basic AES file encryption library implementation
 
 ---Executables---
+xattr-util - A simple program for manipulating extended attributes
+aes-crypt-util - A simple program for encrypting, decrypting, or copying files
 
 ---Examples---
-Build:
+Build All:
  make
+
+Build Fuse Examples and Utilities:
+ make fuse-examples
+
+Build xattr Examples and Utilities:
+ make xattr-examples
+
+Build OpenSSL/AES Examples and Utilities:
+ make openssl-examples
 
 Clean:
  make clean
+
+Copy FileA to FileB:
+ ./aes-crypt-util -c <FileA Path> <FileB Path>
+
+Encrypt FileA to FileB using Passphrase:
+ ./aes-crypt-util -e <Passphrase> <FileA Path> <FileB Path>
+
+Decrypt FileA to FileB using Passphrase:
+(Note: error if FileA not encrypted with aes-crypt.h function or if passphrase is wrong)
+ ./aes-crypt-util -d <Passphrase> <FileA Path> <FileB Path>
+

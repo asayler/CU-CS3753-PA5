@@ -2,6 +2,7 @@ CS3753 (Operating Systems)
 Spring 2012
 University of Colorado Boulder
 Programming Assignment 5
+A FUSE Encrypted File System
 Public Code
 
 By Andy Sayler - 2012
@@ -49,6 +50,10 @@ fusehello      - Mounting executable for "Hello World" FUSE filesystem example
 fusexmp        - Mounting executable for root (\) mirror FUSE filesystem example
 xattr-util     - A simple program for manipulating extended attributes
 aes-crypt-util - A simple program for encrypting, decrypting, or copying files
+
+---Documentation---
+handout/pa5.pdf             - Assignment Instructions and Tips
+http://youtu.be/VrMi6RaUNDs - Assignment Explanation Video 1
 
 ---Examples---
 
@@ -108,5 +113,5 @@ Set/Write attribute on a file
 Get/Read attribute from a file
  ./xattr-util -g <Attr Name> <File Path>
 
-Get/Read attribute from a file
+Remove attribute from a file
  ./xattr-util -r <Attr Name> <File Path>

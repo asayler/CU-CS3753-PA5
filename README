@@ -62,6 +62,6 @@ Encrypt FileA to FileB using Passphrase:
  ./aes-crypt-util -e <Passphrase> <FileA Path> <FileB Path>
 
 Decrypt FileA to FileB using Passphrase:
-(Note: error if FileA not encrypted with aes-crypt.h function or if passphrase is wrong)
+(Note: error if FileA not encrypted with aes-crypt.h or if passphrase is wrong)
  ./aes-crypt-util -d <Passphrase> <FileA Path> <FileB Path>
 

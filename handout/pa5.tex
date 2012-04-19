@@ -1,0 +1,282 @@
+% CSCI3753 - Operating Systems
+% Spring 2012
+% Programming Assignment 5
+% By Andy Sayler (4/18/12) <www.andysayler.com>
+
+\documentclass[12pt]{article}
+
+\usepackage[text={6.5in, 9in}, centering]{geometry}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{hyperref}
+
+\lstset{
+  language={c},
+  basicstyle=\footnotesize,
+  numbers=left,
+  numberstyle=\tiny,
+  stepnumber=1,
+  numbersep=5pt,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=4,
+  captionpos=b,
+  breaklines=true,
+  breakatwhitespace=false,
+  frame=single,
+  frameround=tttt
+}
+
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+
+\newenvironment{packed_enum}{
+\begin{enumerate}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{enumerate}}
+
+\newenvironment{packed_item}{
+\begin{itemize}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{itemize}}
+
+\newenvironment{packed_desc}{
+\begin{description}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{description}}
+
+\title{Programming Assignment 5:\\An Encrypted Filesystem}
+\author{
+  CSCI 3753 - Operating Systems\\
+  University of Colorado at Boulder\\
+  Spring 2012\\
+  By Andy Sayler and Junho Ahn and Richard Han\\
+  Adopted from Assignment by Chris Wailes
+}
+\date{\emph{Due Date: Friday, April 27th, 2012 11:55pm}}
+
+\begin{document}
+
+\maketitle
+
+\section{Assignment Introduction}
+
+
+\section{Your Task}
+
+\subsection{Dependencies}
+This assignment has severl dependines that must be isnatlled in order
+for teh rpeovided code to build correctly. On Debian or Ubuntu, start
+by running \texttt{sudo apt-get update} to update your package
+list. Then run \texttt{sudo apt-get install <package(s)>} to install the
+following packages:
+
+\begin{packed_item}
+\item \texttt{fuse-utils}
+\item \texttt{libfuse-dev}
+\item \texttt{openssl}
+\item \texttt{libssl-dev}
+\item \texttt{libssl-doc} (optional)
+\item \texttt{libssl1.0.0} or \texttt{libssl0.9.8}
+\item \texttt{attr}
+\item \texttt{attr-dev}
+\end{packed_item}
+
+You will need a working Internet connection in order to insure these
+packages install correctly. Note that you can also specify multiple
+packages in a single \texttt{sudo apt-get install <package(s)>}
+call. Some packages may have their own dependencies, but
+\texttt{apt-get} will automatically take care of installing these for you.
+
+\section{What's Included}
+
+We provide some code and examples to help get you started.
+Feel free to use it as a jumping off point (appropriately cited).
+
+\begin{packed_item}
+\item {\bf Makefile} A GNU Make makefile to build all the code listed
+  here.
+\item {\bf README} As the title so eloquently instructs: read
+  it. Provides usage instructions and examples for files listed here.
+\item {\bf fusehello.c} A basic "Hello World" FUSE example. See
+  \texttt{README} for usage instructions.
+\item {\bf fusexmp.c} A basic FUSE mirrored filesystem example that
+  mirrors the root directory (/) and supports most standard
+  operations. See \texttt{README} for usage instructions.
+\item {\bf xattr-util.c} A basic extended attribute manipulation
+  program. Provides an example of proper Linux xattr use.
+  See \texttt{README} for usage instructions.
+\item {\bf aes-crypt-util.c} A basic AES encryption program using the
+  local aes-crypt library (see \texttt{aes-crypt.h}) and the OpenSSL EVP
+  API\cite{openssl-evp}. See \texttt{README} for usage instructions.
+\item {\bf aes-crypt.h} A basic AES file-pointer centric encryption
+  library interface. Implemented in \texttt{aes-crypt.c}.
+\item {\bf aes-crypt.c} A basic AES file-pointer centric encryption
+  library implementation. Uses the OpenSSL EVP API \cite{openssl-evp}.
+\end{packed_item}
+
+\section{What You Must Provide}
+
+When you submit your assignment, you must provide the following as a
+single archive file:
+\begin{packed_enum}
+\item A copy of your Encrypted Filesystem FUSE code
+\item A copy of any supporting code used by your filesystem
+\item A makefile that builds any necessary code
+\item A README explaining how to build and run your code
+\end{packed_enum}
+
+\section{Grading}
+
+40\% of you grade will be based on implementing a filesystem that
+meets the following criteria. You will be expected to provide
+functional proof of the following criteria during your grading
+session. The rubric below shows grading criteria:
+
+\begin{packed_item}
+\item {\bf +10 points:} Filesystem properly mirrors target directory
+  specified at mount time.
+\item {\bf +10 points:} Filesystem uses extended attributes to differentiate
+  between encrypted and unencrypted files.
+\item {\bf +10 points:} Filesystem can transparently read and write
+  securely encrypted files 
+\item {\bf +10 points:} Filesystem can transparently read and update unencrypted
+  files
+\end{packed_item}
+
+If your code does not build or run without errors, you will not receive
+any credit on the objective portion (40\%) of your assignment.
+
+If your code generates warnings when building under gcc on the VM
+using \texttt{-Wall} and \texttt{-Wextra} you will be penalized 1
+point per warning. In addition, to receive full credit your submission must:
+\begin{packed_item}
+\item Meet all requirements elicited in this document
+\item Code must adhere to good coding practices.
+\item Code must be submitted to Moodle prior to due date.
+\end{packed_item}
+
+The other 60\% of your grade will be determined via your grading
+interview where you will be expected to explain your work and answer
+questions regarding it and any concepts related to this assignment.
+
+\section{Obtaining Code}
+The starting code for this assignment is available on the Moodle and
+on github. If you would like practice using a version control system,
+consider forking the code from github. Using the github code is not
+a requirement, but it will help to insure that you stay up to date
+with any updates or changes to the supplied codebase. It is also
+good practice for the kind of development one might expect to do in
+a professional environment. And since your github code can be easily
+shared, it can be a good way to show off your coding skills to
+potential employers and other programmers.
+
+Github code may be forked from the project page here:\\
+\url{https://github.com/asayler/CU-CS3753-2012-PA5}.
+
+\section{Resources}
+Refer to your textbook and class notes on the Moodle for an overview
+of filesystems.
+
+If you require a good C language reference, consult K\&R\cite{K+R}. If
+you need an updated C99 reference see Harbison \& Steele\cite{H+S}.
+
+The Internet\cite{tubes} is also a good resource for finding
+information related to solving this assignment.
+
+You may wish to consult the man pages for the following items, as they
+will be useful and/or required to complete this assignment. Note that
+the first argument to the ``man'' command is the chapter, insuring
+that you access the appropriate version of each man page. See
+\texttt{man man} for more information. Not all of these man pages are
+installed be default. Install the previously discussed dependencies or
+consult an online man page repository if you can not locate a specific
+man page on your system.
+
+\begin{packed_item}
+\item \texttt{man 1 make}
+\item \texttt{man 1 fusermount}
+\item \texttt{man 5 attr}
+\item \texttt{man 2 setxattr}
+\item \texttt{man 2 getxattr}
+\item \texttt{man 2 listxattr}
+\item \texttt{man 2 removexattr}
+\item \texttt{man 3 EVP}
+\item \texttt{man 3 EVP\_CipherUpdate}
+\item \texttt{man 3 crypto}
+\item Many of the system calls used in the FUSE examples also have man pages
+\end{packed_item}
+
+In addition, you may find a number of the references in the bibliography helpful.
+
+\begin{thebibliography}{3}
+
+\bibitem{freedesktop-xattr} freedesktop.org.
+  \newblock \emph{Guidelines for extended attributes}.
+  \newblock \url{http://www.freedesktop.org/wiki/CommonExtendedAttributes}.
+
+\bibitem{fuse-website} FUSE.
+  \newblock \emph{Filesystems in Userspace}.
+  \newblock \url{http://fuse.sourceforge.net/}.
+
+\bibitem{fuse-refs} FUSE.
+  \newblock \emph{Fuse Doxygen API Reference}.
+  \newblock \url{http://fuse.sourceforge.net/doxygen/index.html}.
+
+\bibitem{fuse-wiki} FUSE.
+  \newblock \emph{Fuse Wiki}.
+  \newblock \url{http://sourceforge.net/apps/mediawiki/fuse/index.php?title=Main_Page}.
+
+\bibitem{H+S} Harbison, Samuel and Steele, Guy.
+  \newblock \emph{C: A Reference Manual}.
+  \newblock Fifth Edition: 2002.
+  \newblock Prentice Hall: New Jersey.
+
+\bibitem{K+R} Kernighan, Brian and Dennis, Ritchie.
+  \newblock \emph{The C Programming Language}.
+  \newblock Second Edition: 1988.
+  \newblock Prentice Hall: New Jersey.
+
+\bibitem{openssl-website} OpenSSL.
+  \newblock \emph{Cryptography and SSL/TLS Toolkit}.
+  \newblock \url{http://www.openssl.org/}.
+
+\bibitem{openssl-docs} OpenSSL.
+  \newblock \emph{OpenSSL Documents}.
+  \newblock \url{http://www.openssl.org/docs/}.
+
+\bibitem{openssl-evp} OpenSSL.
+  \newblock \emph{OpenSSL EVP Documentation}.
+  \newblock \url{http://www.openssl.org/docs/crypto/EVP_EncryptInit.html}.
+
+\bibitem{pillai-aes} Pillai, Saju.
+  \newblock \emph{Openssl AES encryption example}.
+  \newblock Decemper 9th, 2008.
+  \newblock \url{http://saju.net.in/blog/?p=36}.
+
+\bibitem{pfeiffer-fuse} Pfeiffer, Joseph.
+  \newblock \emph{Writing a FUSE Filesystem: a Tutorial}.
+  \newblock January 10th, 2011.
+  \newblock \url{http://www.cs.nmsu.edu/~pfeiffer/fuse-tutorial/}.
+
+\bibitem{tubes} Stevens, Ted.
+  \newblock \emph{Speech on Net Neutrality Bill}.
+  \newblock 2006.
+  \newblock \url{http://youtu.be/f99PcP0aFNE}.
+
+\end{thebibliography}
+
+\end{document}  

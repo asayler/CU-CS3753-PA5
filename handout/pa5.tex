@@ -73,13 +73,51 @@
 \maketitle
 
 \section{Assignment Introduction}
+In this assignment, we take a closer look at filesystems.
+You will be writing a mirroring filesystem that provides a
+transparent encryption wrapper on top of an exiting file system.
+Specifically, you will be using FUSE\cite{fuse-website}
+(Filesystems in USErspace) to implement your filesystem,
+extended attributes (xattr) to differentiate between encrypted and
+unencrypted files, and the OpenSSL\cite{openssl-website}
+crypto\cite{openssl-evp} library to provide secure encryption.
 
+The filesystem itself is a simple mirrored pass-through filesystem. For
+example, if our pa5-encfs is mounted on the directory \textit{/tmp/pa5fs}
+and is set to mirror the directory \textit{/home/user}, then any
+action performed on the file \textit{/tmp/pa5fs/foo.txt}
+will be translated into an action on the file
+\textit{/home/user/foo.txt}.
+
+Instead of just directly passing actions to the
+underlying mirrored file, however, your pa5-encfs system will perform encryption
+and decryption as necessary. Thus, if you create a new file
+\textit{/tmp/pa5fs/bar.txt} in the aforementioned setup
+and write some data to it, the data will
+be encrypted before being written to the backing
+\textit{/home/user/bar.txt} file. Likewise, if you were to read the
+\textit{/tmp/pa5fs/bar.txt} file, your filesystem would read the backing encrypted
+\textit{/home/user/bar.txt} file and decrypt the contents before
+passing it to you. If you were to try to read
+the backing \textit{/home/user/bar.txt} file directly, you would just
+get encrypted binary gibberish. When your filesystem is unmounted,
+your data will be securely stored in the mirrored directory
+and indecipherable to anyone who may encounter it.
 
 \section{Your Task}
 
-\subsection{Dependencies}
-This assignment has severl dependines that must be isnatlled in order
-for teh rpeovided code to build correctly. On Debian or Ubuntu, start
+The assignment is primarily a systems project. Thus, you will likely spend
+more time pulling together and learning to assemble a diverse set of
+existing APIs then you will spend writing actual code.
+
+This work is best accomplished in a disciplined, iterative manner. Take
+it one step at a time, and make sure each step is functioning before
+moving on, and you will do well. Note that a working partial solution
+is worth more credit then a broken ``full'' solution.
+
+\subsection{Dependencies and Setup}
+This assignment has several dependencies that must be installed in order
+for the provided code to build correctly. On Ubuntu, start
 by running \texttt{sudo apt-get update} to update your package
 list. Then run \texttt{sudo apt-get install <package(s)>} to install the
 following packages:
@@ -100,6 +138,226 @@ packages install correctly. Note that you can also specify multiple
 packages in a single \texttt{sudo apt-get install <package(s)>}
 call. Some packages may have their own dependencies, but
 \texttt{apt-get} will automatically take care of installing these for you.
+
+In addition to the dependencies discussed above, you may need to
+enable extended attribute support on your system. This is done by
+adding the \texttt{user\_xattr} mount option to any mount point on
+which you wish to use extended attributes in your \texttt{/etc/fstab}
+auto-mount configuration file. For example, on the Ubuntu 10.04 CS3753
+VM, you must modify the following \texttt{/etc/fstab} line:
+
+\begin{verbatim}
+<file system>   <mount>  <type>  <options>          <dump>  <pass> 
+...
+UID=<Root UID>  /        ext4    errors=remount-ro  0       1
+...
+\end{verbatim}
+
+so that it reads:
+
+\begin{verbatim}
+<file system>   <mount>  <type>  <options>                     <dump>  <pass> 
+...
+UID=<Root UID>  /        ext4    errors=remount-ro,user_xattr  0       1
+...
+\end{verbatim}
+
+Note that Root UID will be unique to your system and that your
+system may contain additional \texttt{/etc/fstab} lines that need
+edited. Only data filesystem mounts need to be considered; swap, proc, and
+other system mounts have no concept of extended attributes and should
+be ignored. You must have root privileges to edit the
+\texttt{/etc/fstab} file, so you will probably need to use
+\texttt{sudo} in conjunction with the CLI editor of your choice.
+
+\subsection{FUSE}
+
+The FUSE API\cite{fuse-refs} is the core API used in this
+assignment. It provides a means for implementing filesystem in
+userspace. Normally filesystem are implemented as kernel modules, but
+this reduces your ability to utilize userspace libraries. FUSE
+provides a userspace interface for communicating with the FUSE kernel
+module that performs the necessary in-kernel work on behalf of your
+filesystem. Consult the Resources and References sections for additional
+details.
+
+All filesystem in Unix-like operating systems provide a common
+interface to the user. We refer to this interface as the Virtual File
+System (VFS)\cite{linux-vfs}. The VFS is what allows us to write
+programs that can be completely agnostic to the underlying filesystems
+on a given system. Like all Unix filesystem, a FUSE filesystem also
+implements the VFS interface. The primary task involved in writing a
+FUSE filesystem is to provide implementations for all of the functions
+specified by the VFS.
+
+To accomplish this task, your must implement a number of VFS functions,
+and then pass function pointers to your implementations to the FUSE
+system via a special struct. See the FUSE documentation and the included
+FUSE examples for more information
+\cite{fuse-website,fuse-refs,fuse-wiki,pfeiffer-fuse}.
+
+\subsection{Encryption}
+
+Encryption provides a means for us to mathematically protect data,
+rendering it unreadable to everyone except those in possession of the
+necessary encryption key. There is one primary rule to using
+encryption in your own programs: \emph{Never code your own encryption
+ algorithms}. Writing good encryption libraries is a very difficult
+task. And only publicly reviewed, widely deployed, and heavily tested
+libraries written by encryption experts should ever be trusted. No
+encryption in preferable to bad encryption, as bad encryption just
+encourages a false since of security.
+
+Thus, we will be using the OpenSSL\cite{openssl-website} crypto
+library\cite{openssl-evp} for our
+assignment. The OpenSSL libraries are the de-facto standard for open
+source encryption. In particular, we will be using the AES symmetric
+encryption algorithm with a 256-bit key in CBC mode.
+
+The \texttt{aes-crypt-util} demo program provides an example of using
+AES encryption with a key derived from a user-provided pass phrase. The
+encryption methods used in this example are also suitable for your
+assignment.
+
+The most common tripping point when using AES CBC
+encryption in that encryption and decryption is an all-or-nothing
+game. You can't encrypt or decrypt part of a file. You must encrypt or
+decrypt the entire file or none of it. This is due to the fact that CBC
+encryption schemes are state-full: the transform performed on each
+encrypted block is a function of the transformed output of the previous
+block. Thus, if we attempt to start encrypting or decrypting in
+the middle of a file, we will wind up with data that can not be
+used. You will need to consider this ``entire file or none of it''
+limitation when designing your system.
+
+Consult the Resources and References sections for additional
+details. See the OpenSSL documentation and the included
+\texttt{aes-crypt-util} example for more information
+\cite{openssl-website,openssl-docs,openssl-evp,pillai-aes}.
+
+\subsection{Extended Attributes}
+
+The POSIX extended attribute systems (xattr) provides a means to
+store additional file meta data beyond the standard time-stamp,
+ownership, and permission data. It provides an interface for
+associating arbitrary name-value pairs with specific files.
+
+There are four operations (each with a corresponding system call) that
+allow you to manipulate extend attributes: list, get, set, and
+remove. See the \texttt{xattr-util} example file and the appropriate man
+pages for details on the use of each function.
+
+Extended attributes must be supported by the underlying filesystem to
+function correctly. EXT2, EXT3, EXT4, XFS, ResierFS, and a number of
+additional filesystem provide xattr support. Often, however, this
+support is disabled by default and must be enabled via the
+\texttt{user\_xattr} mount option in the \texttt{/etc/fstab} file. See
+the previous Dependencies and Setup section for additional details on
+configuring your system.
+
+In addition, the Linux xattr implementation limits userspace use of
+extended attributes to a specific ``user'' namespace. The namespace of an
+extended attribute is defined by the first dot-separated field in its
+name. Thus, all extended attributes modified from user space must begin
+with a \texttt{user.} prefix. Failure to use this prefix will result in
+an error when attempting to add, modify, or remove an extended
+attribute. The included \texttt{xattr-util} program provides an
+example of the standard means for transparently affixing this prefix
+to all xattr actions. See \cite{freedesktop-xattr} for additional
+xattr namespace information.
+
+Consult the Resources and References sections for additional
+details. See the xattr documentation, \texttt{attr} man page, and the included
+texttt{xattr-util} example for more information.
+
+\subsection{Development Tips}
+
+As previously mentioned, you will be best served by taking an iterative
+approach to this assignment. Start by familiarizing yourself with the
+examples and available documentation. Then take your implementation one
+step at a time, insure a single feature is working before moving on to
+additional features. The following represents one possible feature development
+order for this assignment:
+
+\begin{packed_enum}
+\item {\bf Start With a Copy of \texttt{fusexmp.c}}: This will provide
+  you with the basics of a mirror file system on which to build.
+\item {\bf Add Support for Specific Mirror Directory}:
+  \texttt{fusexmp.c} only supports mirroring the root directory. Add an
+  additional argument to \texttt{main} that allows the user to specify a specific
+  directory to mirror (hint: \cite{pfeiffer-fuse} contains information
+  of passing FUSE private data via \texttt{fuse\_main} function 
+  and accessing it within your VFS implementations).
+  Then modify each VFS function to redirect
+  actions to the corresponding file in the specified mirror directory
+  (hint: this involves a
+  rather simple transformation of the \texttt{path} variable that many
+  VFS functions are passed).
+\item {\bf Add Support for Encryption}: Add encryption and decryption
+  support to your system. Remember that files must be encrypted and
+  decrypted in a single aes-crypt pass. Also, note that you can
+  use the \texttt{aes-crypt-util} function to manually encrypt or decrypt files
+  to aid you in testing your system. Just make sure to use the same
+  key pass phrase when encrypting or decrypting manually as you pass to
+  your filesystem.
+\item {\bf Add Support for an XATTR Encrypted Flag} Update the flag
+  when necessary and only perform crypto operations when it indicates
+  that a file in encrypted. Again, you may find the provided
+  \texttt{xattr-util} function useful when testing or debugging your
+  system.
+\end{packed_enum}
+
+If you encounter errors, you may find FUSE's debugging capabilities
+handy. If you run a FUSE mount executable with the \texttt{-d} flag, it
+will mount the filesystem in debug mode. In this mode, all FUSE status
+is printed to the terminal. Use one terminal instance to monitor FUSE
+and another to interact with your filesystem and force specific
+behaviors and actions. Print output sent to \texttt{stderr} from
+within your implementation is also available via this debug mode.
+
+\section{Requirements and Specifications}
+
+In addition to the requirements and specification elicited elsewhere in
+this document, your file system must satisfy the following in order to
+receive full credit.
+
+\begin{packed_item}
+  \item {\bf Executable} Your filesystem should build a standard FUSE
+    executable file called \texttt{pa5-encfs} that mounts your file
+    system. Your executable should accept the following call format:
+    \texttt{./pa5-encfs <Key Phrase> <Mirror Directory> <Mount Point>}.
+  \item {\bf Read Behavior} When an encrypted file is read through your
+    filesystem, it should be transparently decrypted and the plaintext
+    data passed to the reading application. When an unencrypted file
+    is read through your filesystem, the data should be passed directly
+    to the reading application.
+\item {\bf Write Behavior} When an existing encrypted file is written through your
+    filesystem, the plaintext data passed from the writing application
+    should be transparently encrypted before being written to the
+    final destination in the mirror directory.
+    When an existing unencrypted file
+    is written through your filesystem, the plaintext data passed
+    from the writing application should be written directly to the
+    final destination in the mirror directory.
+\item {\bf Create Behavior} When a new file is created through your
+  filesystem, it should be encrypted (even empty files) and flagged as
+  such.
+\item {\bf Encryption Strength} Encryption should, at a minimum, meet
+  AES 256-bit CBC security levels. The provided \texttt{aes-crypt.h}
+  functions meet this requirement.
+\item {\bf Extended Attributes} Your filesystem should store a flag
+  indicating whether or not a file is encrypted using the the extended
+  attributes for the corresponding mirror file. The flag should reside
+  in the \texttt{user} namespace\cite{freedesktop-xattr} and be named
+  \texttt{pa5-encfs.encrypted}. It should have ascii text values of either
+  ``true'' or ``false''. If no flag is detected on a specific file,
+  then it should be assumed that the file is not encrypted (same
+  behavior as detecting a flag with a value equal to ``false'').
+\item {\bf Supported Functions} At a minimum your filesystem must
+  support the functions included in the \texttt{fusexmp}
+  example. Additional functions may be implemented if you deem them
+  necessary for your purposes.
+\end{packed_item}
 
 \section{What's Included}
 
@@ -125,7 +383,7 @@ Feel free to use it as a jumping off point (appropriately cited).
 \item {\bf aes-crypt.h} A basic AES file-pointer centric encryption
   library interface. Implemented in \texttt{aes-crypt.c}.
 \item {\bf aes-crypt.c} A basic AES file-pointer centric encryption
-  library implementation. Uses the OpenSSL EVP API \cite{openssl-evp}.
+  library implementation. Uses the OpenSSL EVP API\cite{openssl-evp}.
 \end{packed_item}
 
 \section{What You Must Provide}
@@ -133,7 +391,7 @@ Feel free to use it as a jumping off point (appropriately cited).
 When you submit your assignment, you must provide the following as a
 single archive file:
 \begin{packed_enum}
-\item A copy of your Encrypted Filesystem FUSE code
+\item A copy of your pa4-endfs FUSE code
 \item A copy of any supporting code used by your filesystem
 \item A makefile that builds any necessary code
 \item A README explaining how to build and run your code
@@ -144,7 +402,7 @@ single archive file:
 40\% of you grade will be based on implementing a filesystem that
 meets the following criteria. You will be expected to provide
 functional proof of the following criteria during your grading
-session. The rubric below shows grading criteria:
+session.
 
 \begin{packed_item}
 \item {\bf +10 points:} Filesystem properly mirrors target directory
@@ -152,9 +410,37 @@ session. The rubric below shows grading criteria:
 \item {\bf +10 points:} Filesystem uses extended attributes to differentiate
   between encrypted and unencrypted files.
 \item {\bf +10 points:} Filesystem can transparently read and write
-  securely encrypted files 
+  securely encrypted files using a pass phrase specified at mount time.
 \item {\bf +10 points:} Filesystem can transparently read and update unencrypted
   files
+\end{packed_item}
+
+In addition, the following items are worth extra credit. In no case
+will the maximum score on the assignment exceed 110/100.
+\begin{packed_item}
+\item {\bf +10 extra points:} Filesystem encrypts, hides, or
+  otherwise obfuscates the directory structure to make it
+  cryptographically difficult to determine the names or locations of
+  encrypted files.
+\item {\bf +10 extra points:} Filesystem encrypts, hides, or
+  otherwise obfuscates file attributes to make it
+  cryptographically difficult to determine the time-stamps, ownership,
+  and permissions of encrypted files.
+\item {\bf +5 extra points:} Filesystem supports multiple encryption
+  keys for different files,
+  using an additional extended attributes to mark each file with
+  a unique identifier indicating the key used to encrypt it. Filesystem only
+  attempts to decrypt files associated with the currently loaded
+  key. You can think of this as a basic form of multi-user support.
+\item {\bf +5 extra points:} Filesystem supports multiple encryption
+  keys for a single file. You will probably need to use a layered
+  encryption method, where a master key is used to encrypt each file,
+  and then multiple copies of the master key are themselves encrypted
+  with the necessary additional keys and stored for future
+  retrieval. Such a system would be useful if you wished to provide
+  multiple users with access to an encrypted file with forfeiting your
+  master key. When combined with the previous item, this will implement
+  fairly versatile multi-user support.
 \end{packed_item}
 
 If your code does not build or run without errors, you will not receive
@@ -201,7 +487,7 @@ You may wish to consult the man pages for the following items, as they
 will be useful and/or required to complete this assignment. Note that
 the first argument to the ``man'' command is the chapter, insuring
 that you access the appropriate version of each man page. See
-\texttt{man man} for more information. Not all of these man pages are
+\texttt{man 1 man} for more information. Not all of these man pages are
 installed be default. Install the previously discussed dependencies or
 consult an online man page repository if you can not locate a specific
 man page on your system.
@@ -222,7 +508,7 @@ man page on your system.
 
 In addition, you may find a number of the references in the bibliography helpful.
 
-\begin{thebibliography}{3}
+\begin{thebibliography}{13}
 
 \bibitem{freedesktop-xattr} freedesktop.org.
   \newblock \emph{Guidelines for extended attributes}.
@@ -244,6 +530,11 @@ In addition, you may find a number of the references in the bibliography helpful
   \newblock \emph{C: A Reference Manual}.
   \newblock Fifth Edition: 2002.
   \newblock Prentice Hall: New Jersey.
+
+\bibitem{linux-vfs} Johnson, Michael.
+  \newblock \emph{A tour of the Linux VFS}.
+  \newblock 1996.
+  \newblock \url{http://tldp.org/LDP/khg/HyperNews/get/fs/vfstour.html}.
 
 \bibitem{K+R} Kernighan, Brian and Dennis, Ritchie.
   \newblock \emph{The C Programming Language}.

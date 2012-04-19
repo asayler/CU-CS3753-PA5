@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     char* key_str = NULL;
 
     /* Check General Input */
-    if(argc < 2){
+    if(argc < 3){
 	fprintf(stderr, "usage: %s %s\n", argv[0],
 		"<type> <opt key phrase> <in path> <out path>");
 	exit(EXIT_FAILURE);

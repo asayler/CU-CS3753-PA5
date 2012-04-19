@@ -304,6 +304,21 @@ static int xmp_statfs(const char *path, struct statvfs *stbuf)
 	return 0;
 }
 
+static int xmp_create(const char* path, mode_t mode, struct fuse_file_info* fi) {
+
+    (void) fi;
+
+    int res;
+    res = creat(path, mode);
+    if(res == -1)
+	return -errno;
+
+    close(res);
+
+    return 0;
+}
+
+
 static int xmp_release(const char *path, struct fuse_file_info *fi)
 {
 	/* Just a stub.	 This method is optional and can safely be left
@@ -382,6 +397,7 @@ static struct fuse_operations xmp_oper = {
 	.read		= xmp_read,
 	.write		= xmp_write,
 	.statfs		= xmp_statfs,
+	.create         = xmp_create,
 	.release	= xmp_release,
 	.fsync		= xmp_fsync,
 #ifdef HAVE_SETXATTR

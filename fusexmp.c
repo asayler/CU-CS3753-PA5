@@ -2,13 +2,28 @@
   FUSE: Filesystem in Userspace
   Copyright (C) 2001-2007  Miklos Szeredi <miklos@szeredi.hu>
 
+  Minor modifications and note by Andy Sayler (2012) <www.andysayler.com>
+
+  Source: fuse-2.8.7.tar.gz examples directory
+  http://sourceforge.net/projects/fuse/files/fuse-2.X/
+
   This program can be distributed under the terms of the GNU GPL.
   See the file COPYING.
 
-  gcc -Wall `pkg-config fuse --cflags --libs` fusexmp.c -o fusexmp
+  gcc -Wall `pkg-config fuse --cflags` fusexmp.c -o fusexmp `pkg-config fuse --libs`
+
+  Note: This implementation is largely stateless and does not maintain
+        open file handels between open and release calls (fi->fh).
+        Instead, files are opened and closed as necessary inside read(), write(),
+        etc calls. As such, the functions that rely on maintaining file handles are
+        not implmented (fgetattr(), etc). Those seeking a more efficient and
+        more complete implementation may wish to add fi->fh support to minimize
+        open() and close() calls and support fh dependent functions.
+
 */
 
-#define FUSE_USE_VERSION 26
+#define FUSE_USE_VERSION 28
+#define HAVE_SETXATTR
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -312,7 +327,6 @@ static int xmp_fsync(const char *path, int isdatasync,
 }
 
 #ifdef HAVE_SETXATTR
-/* xattr operations are optional and can safely be left unimplemented */
 static int xmp_setxattr(const char *path, const char *name, const char *value,
 			size_t size, int flags)
 {

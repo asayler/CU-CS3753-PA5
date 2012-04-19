@@ -31,13 +31,16 @@ handout - Assignment description and documentation
 ---Files---
 Makefile         - GNU makefile to build all relevant code
 fusehello.c      - Basic "Hello World" FUSE example
+fusexmp.c        - Basic FUSE mirrored filesystem example (mirrors /)
 xattr.c          - Basic Extended Attribute manipulation program
 aes-crypt-util.c - Basic AES encryption program using aes-crypt library
 aes-crypt.h      - Basic AES file encryption library interface
 aes-crypt.c      - Basic AES file encryption library implementation
 
 ---Executables---
-xattr-util - A simple program for manipulating extended attributes
+fusehello      - Mounting executable for "Hello World" FUSE filesystem example
+fusexmp        - Mounting executable for root (\) mirror FUSE filesystem example
+xattr-util     - A simple program for manipulating extended attributes
 aes-crypt-util - A simple program for encrypting, decrypting, or copying files
 
 ---Examples---
@@ -67,6 +70,10 @@ Mount fusehello on new directory
 
 Mount fusehello in Debug Mode on existing empty directory
  ./fusehello -d <Mount Point>
+
+Mount fusexmp on existing directory and list (ls) mirrored root directory (/)
+ ./fusexmp <Mount Point>
+ ls <Mount Point>
 
 Unmount a FUSE filesystem
  fusermount -u <Mount Point>

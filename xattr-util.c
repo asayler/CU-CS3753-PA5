@@ -40,6 +40,12 @@
 #define ENOATTR ENODATA
 #endif
 
+/* Add namespace defintion for older kernels. Normally included in linux/xattr.h */
+#ifndef XATTR_USER_PREFIX
+#define XATTR_USER_PREFIX "user."
+#define XATTR_USER_PREFIX_LEN (sizeof (XATTR_USER_PREFIX) - 1)
+#endif
+
 static void printUsageGeneral(char* pgmName){
     fprintf(stderr, "Usage: %s %s\n",
 	    pgmName, USAGE_GENERAL);    

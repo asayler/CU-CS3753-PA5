@@ -25,6 +25,12 @@ libfuse-dev
 libssl1.0.0 or libssl0.9.8
 libssl-dev
 
+Note: To use extended attributes (xattr) on EXT filesystems,
+      you must add the 'user_xattr' mount option to the
+      mount options of any mounts on which you intend to use 
+      extended attributes. Failure to so may result in an error
+      when trying to set, get, or remove xattr values.
+
 ---Folders---
 handout - Assignment description and documentation
 

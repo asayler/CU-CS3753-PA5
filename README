@@ -30,6 +30,7 @@ handout - Assignment description and documentation
 
 ---Files---
 Makefile         - GNU makefile to build all relevant code
+fusehello.c      - Basic "Hello World" FUSE example
 xattr.c          - Basic Extended Attribute manipulation program
 aes-crypt-util.c - Basic AES encryption program using aes-crypt library
 aes-crypt.h      - Basic AES file encryption library interface
@@ -40,6 +41,9 @@ xattr-util - A simple program for manipulating extended attributes
 aes-crypt-util - A simple program for encrypting, decrypting, or copying files
 
 ---Examples---
+
+***Building***
+
 Build All:
  make
 
@@ -55,6 +59,20 @@ Build OpenSSL/AES Examples and Utilities:
 Clean:
  make clean
 
+***FUSE Examples***
+
+Mount fusehello on new directory
+ mkdir <Mount Point>
+ ./fusehello <Mount Point>
+
+Mount fusehello in Debug Mode on existing empty directory
+ ./fusehello -d <Mount Point>
+
+Unmount a FUSE filesystem
+ fusermount -u <Mount Point>
+
+***OpenSSL Examples***
+
 Copy FileA to FileB:
  ./aes-crypt-util -c <FileA Path> <FileB Path>
 
@@ -64,4 +82,3 @@ Encrypt FileA to FileB using Passphrase:
 Decrypt FileA to FileB using Passphrase:
 (Note: error if FileA not encrypted with aes-crypt.h or if passphrase is wrong)
  ./aes-crypt-util -d <Passphrase> <FileA Path> <FileB Path>
-

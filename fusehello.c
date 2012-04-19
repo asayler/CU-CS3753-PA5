@@ -2,13 +2,19 @@
   FUSE: Filesystem in Userspace
   Copyright (C) 2001-2007  Miklos Szeredi <miklos@szeredi.hu>
 
+  Source: fuse-2.8.7.tar.gz examples directory
+  http://sourceforge.net/projects/fuse/files/fuse-2.X/
+
+  See FUSE wiki for details:
+  http://sourceforge.net/apps/mediawiki/fuse/index.php?title=Hello_World
+
   This program can be distributed under the terms of the GNU GPL.
   See the file COPYING.
 
   gcc -Wall `pkg-config fuse --cflags --libs` hello.c -o hello
 */
 
-#define FUSE_USE_VERSION 26
+#define FUSE_USE_VERSION 28
 
 #include <fuse.h>
 #include <stdio.h>

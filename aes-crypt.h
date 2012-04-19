@@ -1,7 +1,8 @@
 /* aes-crypt.h
  * High level function interface for performing AES encryption on FILE pointers
+ * Uses OpenSSL libcrypto EVP API
  *
- *  By Andy Sayler (www.andysayler.com)
+ * By Andy Sayler (www.andysayler.com)
  * Created  04/17/12
  * Modified 04/18/12
  *

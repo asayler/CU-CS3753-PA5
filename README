@@ -19,17 +19,18 @@ See file comments for specific details and references.
 ---Dependencies---
 fuse-utils
 openssl
+attr
+attr-dev
 libfuse-dev
-libattr1-dev
-libssl1.0.0 (or libssl0.9.X)
+libssl1.0.0 or libssl0.9.8
 libssl-dev
-libssl-doc
 
 ---Folders---
 handout - Assignment description and documentation
 
 ---Files---
 Makefile         - GNU makefile to build all relevant code
+README           - This file
 fusehello.c      - Basic "Hello World" FUSE example
 fusexmp.c        - Basic FUSE mirrored filesystem example (mirrors /)
 xattr-util.c     - Basic Extended Attribute manipulation program

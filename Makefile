@@ -19,7 +19,7 @@ LFLAGS = -g -Wall -Wextra
 
 FUSE_EXAMPLES = fusehello fusexmp 
 XATTR_EXAMPLES = xattr-util
-OPENSSL_EXAMPLES = aes-crypt 
+OPENSSL_EXAMPLES = aes-crypt-util 
 
 .PHONY: all fuse-examples xattr-examples openssl-examples clean
 
@@ -38,7 +38,7 @@ fusexmp: fusexmp.o
 xattr-util: xattr-util.o
 	$(CC) $(LFLAGS) $^ -o $@
 
-aes-crypt: aes-crypt.o
+aes-crypt-util: aes-crypt-util.o aes-crypt.o
 	$(CC) $(LFLAGS) $^ -o $@ $(LLIBSOPENSSL)
 
 fusehello.o: fusehello.c
@@ -48,6 +48,9 @@ fusexmp.o: fusexmp.c
 	$(CC) $(CFLAGS) $(CFLAGSFUSE) $<
 
 xattr-util.o: xattr-util.c
+	$(CC) $(CFLAGS) $<
+
+aes-crypt-util.o: aes-crypt-util.c aes-crypt.h
 	$(CC) $(CFLAGS) $<
 
 aes-crypt.o: aes-crypt.c aes-crypt.h
